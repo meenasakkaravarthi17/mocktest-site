@@ -8,7 +8,7 @@ export default function Exams({ params }) {
 
       {exams.map((exam) => (
         <div key={exam} style={{margin:"10px"}}>
-          <a href={`/exam/${params.id}/${exam}`}>
+          <a href={`/payment/${params.id}/${exam}`}>
             Exam {exam}
           </a>
         </div>
