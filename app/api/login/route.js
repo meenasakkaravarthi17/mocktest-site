@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import connectDB from "../../../lib/mongodb";
 import User from "../../../models/User";
 import jwt from "jsonwebtoken";
