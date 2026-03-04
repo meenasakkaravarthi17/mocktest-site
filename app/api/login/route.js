@@ -1,7 +1,10 @@
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 import connectDB from "../../../lib/mongodb";
 import User from "../../../models/User";
 import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
   try {
@@ -10,32 +13,30 @@ export async function POST(req) {
     const { email, password } = await req.json();
 
     const user = await User.findOne({ email });
-
     if (!user) {
-      return new Response(JSON.stringify({ message: "User not found" }), {
-        status: 400,
-      });
+      return NextResponse.json({ message: "User not found" }, { status: 400 });
     }
 
     if (user.password !== password) {
-      return new Response(JSON.stringify({ message: "Invalid password" }), {
-        status: 400,
-      });
+      return NextResponse.json({ message: "Invalid password" }, { status: 400 });
     }
 
-    const token = jwt.sign(
-      { userId: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      return NextResponse.json(
+        { message: "JWT_SECRET is missing in Vercel env vars" },
+        { status: 500 }
+      );
+    }
 
-    return new Response(
-      JSON.stringify({ message: "Login successful", token }),
-      { status: 200 }
-    );
+    const token = jwt.sign({ userId: user._id }, secret, { expiresIn: "1d" });
+
+    return NextResponse.json({ message: "Login successful", token }, { status: 200 });
   } catch (error) {
-    return new Response(JSON.stringify({ message: "Server error" }), {
-      status: 500,
-    });
+    console.error("LOGIN_ERROR:", error);
+    return NextResponse.json(
+      { message: error?.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
