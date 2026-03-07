@@ -42,6 +42,24 @@ export default function RootLayout({ children }) {
         }}>
           © 2026 MockTest Pro | All Rights Reserved
         </footer>
+            <button
+  onClick={() => {
+    localStorage.removeItem("token");
+    alert("Logged out");
+    window.location.href = "/login";
+  }}
+  style={{
+    marginLeft: "20px",
+    padding: "8px 12px",
+    background: "white",
+    color: "#2563eb",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer"
+  }}
+>
+  Logout
+</button>
 
       </body>
     </html>
