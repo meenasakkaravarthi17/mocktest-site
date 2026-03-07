@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function Exam({ params }) {
+export default function Payment({ params }) {
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
@@ -16,29 +16,82 @@ export default function Exam({ params }) {
     }
   }, []);
 
+  const handlePayment = async () => {
+    const res = await fetch("/api/create-order", {
+      method: "POST",
+    });
+
+    const order = await res.json();
+
+    if (!order.id) {
+      alert("Order creation failed");
+      return;
+    }
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: "INR",
+      name: "Mock Test Portal",
+      description: "Exam Access Fee",
+      order_id: order.id,
+      handler: function () {
+        window.location.href = `/exam/${params.subject}/${params.exam}`;
+      },
+      theme: { color: "#2563eb" }
+    };
+
+    const rzp = new window.Razorpay(options);
+    rzp.open();
+  };
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   if (!allowed) {
-    return <p style={{ textAlign: "center", marginTop: "100px" }}>Checking access...</p>;
+    return <p style={{ textAlign: "center", marginTop: "100px" }}>Checking login...</p>;
   }
 
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h2>Subject: {params.subject}</h2>
-      <h3>Exam: {params.exam}</h3>
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "#f4f6f9"
+    }}>
+      <div style={{
+        background: "white",
+        padding: "40px",
+        borderRadius: "15px",
+        boxShadow: "0 6px 18px rgba(0,0,0,0.1)",
+        textAlign: "center",
+        width: "350px"
+      }}>
+        <h2 style={{ marginBottom: "20px" }}>Secure Payment</h2>
+        <p style={{ marginBottom: "30px", color: "gray" }}>
+          Pay ₹99 to unlock this exam
+        </p>
 
-      <div
-        style={{
-          marginTop: "30px",
-          padding: "20px",
-          border: "1px solid #ccc",
-          display: "inline-block",
-        }}
-      >
-        <p>Sample Question 1</p>
-
-        <div><input type="radio" name="q1" /> Option A</div>
-        <div><input type="radio" name="q1" /> Option B</div>
-        <div><input type="radio" name="q1" /> Option C</div>
-        <div><input type="radio" name="q1" /> Option D</div>
+        <button
+          onClick={handlePayment}
+          style={{
+            width: "100%",
+            padding: "12px",
+            background: "#2563eb",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            fontSize: "16px",
+            cursor: "pointer"
+          }}
+        >
+          Pay ₹99 Now
+        </button>
       </div>
     </div>
   );
