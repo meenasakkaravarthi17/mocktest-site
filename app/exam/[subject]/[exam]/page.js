@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-export default function Payment({ params }) {
+export default function ExamPage({ params }) {
   const [allowed, setAllowed] = useState(false);
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -11,88 +13,69 @@ export default function Payment({ params }) {
     if (!token) {
       alert("Please login first");
       window.location.href = "/login";
-    } else {
-      setAllowed(true);
-    }
-  }, []);
-
-  const handlePayment = async () => {
-    const res = await fetch("/api/create-order", {
-      method: "POST",
-    });
-
-    const order = await res.json();
-
-    if (!order.id) {
-      alert("Order creation failed");
       return;
     }
 
-    const options = {
-      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-      amount: order.amount,
-      currency: "INR",
-      name: "Mock Test Portal",
-      description: "Exam Access Fee",
-      order_id: order.id,
-      handler: function () {
-        window.location.href = `/exam/${params.subject}/${params.exam}`;
-      },
-      theme: { color: "#2563eb" }
-    };
-
-    const rzp = new window.Razorpay(options);
-    rzp.open();
-  };
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    document.body.appendChild(script);
+    setAllowed(true);
   }, []);
 
+  useEffect(() => {
+    if (!allowed) return;
+
+    async function loadQuestions() {
+      try {
+        const res = await fetch(`/api/questions/${params.subject}/${params.exam}`);
+        const data = await res.json();
+        setQuestions(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadQuestions();
+  }, [allowed, params.subject, params.exam]);
+
   if (!allowed) {
-    return <p style={{ textAlign: "center", marginTop: "100px" }}>Checking login...</p>;
+    return <p style={{ textAlign: "center", marginTop: "100px" }}>Checking access...</p>;
+  }
+
+  if (loading) {
+    return <p style={{ textAlign: "center", marginTop: "100px" }}>Loading questions...</p>;
   }
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "#f4f6f9"
-    }}>
-      <div style={{
-        background: "white",
-        padding: "40px",
-        borderRadius: "15px",
-        boxShadow: "0 6px 18px rgba(0,0,0,0.1)",
-        textAlign: "center",
-        width: "350px"
-      }}>
-        <h2 style={{ marginBottom: "20px" }}>Secure Payment</h2>
-        <p style={{ marginBottom: "30px", color: "gray" }}>
-          Pay ₹99 to unlock this exam
-        </p>
+    <div style={{ maxWidth: "800px", margin: "40px auto", padding: "20px" }}>
+      <h1>
+        {params.subject} - Exam {params.exam}
+      </h1>
 
-        <button
-          onClick={handlePayment}
-          style={{
-            width: "100%",
-            padding: "12px",
-            background: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            fontSize: "16px",
-            cursor: "pointer"
-          }}
-        >
-          Pay ₹99 Now
-        </button>
-      </div>
+      {questions.length === 0 ? (
+        <p>No questions found for this exam.</p>
+      ) : (
+        questions.map((q, index) => (
+          <div
+            key={q._id}
+            style={{
+              background: "white",
+              padding: "20px",
+              borderRadius: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              marginBottom: "20px",
+            }}
+          >
+            <h3>
+              {index + 1}. {q.questionText}
+            </h3>
+
+            <div><input type="radio" name={`q-${q._id}`} /> A. {q.optionA}</div>
+            <div><input type="radio" name={`q-${q._id}`} /> B. {q.optionB}</div>
+            <div><input type="radio" name={`q-${q._id}`} /> C. {q.optionC}</div>
+            <div><input type="radio" name={`q-${q._id}`} /> D. {q.optionD}</div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
