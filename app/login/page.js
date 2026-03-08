@@ -15,10 +15,11 @@ export default function Login() {
     const data = await res.json();
 
     if (res.ok) {
-      localStorage.setItem("token", data.token);
-      alert("Login Successful");
-      window.location.href = "/subjects";
-    } else {
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("userEmail", email);
+  alert("Login Successful");
+  window.location.href = "/subjects";
+} else {
       alert(data.message);
     }
   };
